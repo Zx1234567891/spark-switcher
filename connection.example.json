@@ -1,0 +1,5 @@
+{
+  "sshUser": "spark",
+  "headAddress": "192.0.2.1",
+  "localAddress": "192.0.2.2"
+}

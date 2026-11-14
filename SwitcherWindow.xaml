@@ -1,0 +1,217 @@
+<Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Spark 模型切换器" Width="1040" Height="666" MinWidth="830" MinHeight="590"
+        WindowStartupLocation="CenterScreen" FontFamily="Microsoft YaHei UI" FontSize="13"
+        Background="#F8F5F3" Foreground="#271A20" UseLayoutRounding="True">
+  <Window.Resources>
+    <SolidColorBrush x:Key="Ink" Color="#271A20"/>
+    <SolidColorBrush x:Key="Muted" Color="#695860"/>
+    <SolidColorBrush x:Key="Line" Color="#E8DEDF"/>
+    <Style TargetType="TextBlock">
+      <Setter Property="TextOptions.TextFormattingMode" Value="Display"/>
+    </Style>
+    <Style TargetType="Button" x:Key="Action">
+      <Setter Property="Foreground" Value="#55283A"/>
+      <Setter Property="Background" Value="#FFFFFF"/>
+      <Setter Property="BorderBrush" Value="{StaticResource Line}"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="Padding" Value="15,9"/>
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <Border x:Name="Surface" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                    BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="9" Padding="{TemplateBinding Padding}">
+              <ContentPresenter VerticalAlignment="Center" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"/>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Surface" Property="Opacity" Value="0.80"/></Trigger>
+              <Trigger Property="IsPressed" Value="True"><Setter TargetName="Surface" Property="Opacity" Value="0.65"/></Trigger>
+              <Trigger Property="IsEnabled" Value="False"><Setter TargetName="Surface" Property="Opacity" Value="0.45"/></Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+    <Style TargetType="Button" x:Key="Primary" BasedOn="{StaticResource Action}">
+      <Setter Property="Foreground" Value="White"/>
+      <Setter Property="Background" Value="#842343"/>
+      <Setter Property="BorderBrush" Value="#842343"/>
+      <Setter Property="FontWeight" Value="SemiBold"/>
+      <Setter Property="MinWidth" Value="146"/>
+    </Style>
+    <Style TargetType="RadioButton" x:Key="ModelCard">
+      <Setter Property="Background" Value="White"/>
+      <Setter Property="BorderBrush" Value="{StaticResource Line}"/>
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="RadioButton">
+            <Border x:Name="Surface" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                    BorderThickness="1" CornerRadius="13" Padding="12" MinHeight="132">
+              <Grid>
+                <ContentPresenter/>
+                <Border x:Name="Indicator" CornerRadius="7" BorderBrush="#CDBDC4" BorderThickness="1" Width="14" Height="14"
+                        HorizontalAlignment="Right" VerticalAlignment="Top">
+                  <Ellipse x:Name="Dot" Fill="#842343" Width="6" Height="6" Visibility="Collapsed"/>
+                </Border>
+              </Grid>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Surface" Property="BorderBrush" Value="#AD7087"/></Trigger>
+              <Trigger Property="IsChecked" Value="True">
+                <Setter TargetName="Surface" Property="BorderBrush" Value="#9C4161"/>
+                <Setter TargetName="Surface" Property="Background" Value="#FCF0F4"/>
+                <Setter TargetName="Indicator" Property="BorderBrush" Value="#842343"/>
+                <Setter TargetName="Dot" Property="Visibility" Value="Visible"/>
+              </Trigger>
+              <Trigger Property="IsEnabled" Value="False"><Setter TargetName="Surface" Property="Opacity" Value="0.65"/></Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+    <Style x:Key="LogoTile" TargetType="Border">
+      <Setter Property="Background" Value="White"/>
+      <Setter Property="BorderBrush" Value="#E9E1E4"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="CornerRadius" Value="10"/>
+      <Setter Property="Width" Value="43"/>
+      <Setter Property="Height" Value="43"/>
+      <Setter Property="Padding" Value="7"/>
+      <Setter Property="HorizontalAlignment" Value="Left"/>
+    </Style>
+    <Style x:Key="CardName" TargetType="TextBlock">
+      <Setter Property="FontWeight" Value="SemiBold"/>
+      <Setter Property="FontSize" Value="13"/>
+      <Setter Property="TextWrapping" Value="Wrap"/>
+      <Setter Property="Foreground" Value="{StaticResource Ink}"/>
+    </Style>
+    <Style x:Key="CardDetail" TargetType="TextBlock">
+      <Setter Property="Foreground" Value="{StaticResource Muted}"/>
+      <Setter Property="FontSize" Value="12"/>
+      <Setter Property="Margin" Value="0,3,0,0"/>
+    </Style>
+    <Style x:Key="Heading" TargetType="TextBlock">
+      <Setter Property="FontSize" Value="18"/>
+      <Setter Property="FontWeight" Value="Bold"/>
+      <Setter Property="Margin" Value="0,0,0,10"/>
+    </Style>
+  </Window.Resources>
+  <Grid Background="#F8F5F3">
+    <Grid.ColumnDefinitions><ColumnDefinition Width="248"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+    <Border Grid.Column="0" Padding="22,29" Background="#321724">
+      <DockPanel LastChildFill="True">
+        <StackPanel DockPanel.Dock="Top">
+          <Border Background="White" CornerRadius="12" Padding="10,12">
+            <StackPanel>
+              <Grid Height="45">
+                <Grid.ColumnDefinitions><ColumnDefinition Width="47"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                <Image x:Name="XidianLogo" Width="43" Height="43" Stretch="Uniform" HorizontalAlignment="Left"/>
+                <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="7,0,0,0">
+                  <TextBlock Text="西安电子科技大学" FontSize="13" FontWeight="Bold"/>
+                  <TextBlock Text="XIDIAN UNIVERSITY" FontSize="9" Foreground="#6C4C5A" Margin="0,2,0,0"/>
+                </StackPanel>
+              </Grid>
+              <Border Height="1" Background="#E8DEDF" Margin="0,10"/>
+              <Grid Height="45">
+                <Grid.ColumnDefinitions><ColumnDefinition Width="47"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                <Image x:Name="CyberLogo" Width="43" Height="43" Stretch="Uniform" HorizontalAlignment="Left"/>
+                <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="7,0,0,0">
+                  <TextBlock Text="西电赛博长安" FontSize="13" FontWeight="Bold"/>
+                  <TextBlock Text="CyberChangAn" FontSize="10" Foreground="#6C4C5A" Margin="0,2,0,0"/>
+                </StackPanel>
+              </Grid>
+            </StackPanel>
+          </Border>
+          <TextBlock Text="Spark Switcher" FontSize="24" FontWeight="Bold" Foreground="White" Margin="0,29,0,4"/>
+          <TextBlock Text="模型切换器" FontSize="14" Foreground="#EAD4DE"/>
+        </StackPanel>
+        <StackPanel DockPanel.Dock="Bottom">
+          <Border Background="#563343" Height="1" Margin="0,0,0,17"/>
+          <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
+            <Ellipse x:Name="LinkDot" Width="8" Height="8" Fill="#D5A9B9" VerticalAlignment="Center" Margin="0,0,8,0"/>
+            <TextBlock x:Name="ConnectionLabel" Text="正在连接 Spark" FontWeight="SemiBold" Foreground="White"/>
+          </StackPanel>
+          <TextBlock Text="Windows  →  DGX Spark × 2" FontSize="12" Foreground="#DEC2CE"/>
+        </StackPanel>
+        <Grid/>
+      </DockPanel>
+    </Border>
+    <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+      <StackPanel Margin="30,26,30,26" MaxWidth="970">
+        <Grid Margin="0,0,0,17">
+          <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+          <TextBlock Text="模型控制台" FontSize="28" FontWeight="Bold" VerticalAlignment="Center"/>
+          <Button x:Name="RefreshButton" Grid.Column="1" Style="{StaticResource Action}" Content="刷新状态" VerticalAlignment="Center"/>
+        </Grid>
+        <Border BorderBrush="{StaticResource Line}" Background="White" BorderThickness="1" CornerRadius="13" Padding="15,11" Margin="0,0,0,19">
+          <Grid>
+            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+            <StackPanel>
+              <TextBlock x:Name="ActiveLabel" Text="正在读取模型状态" FontSize="15" FontWeight="Bold"/>
+              <TextBlock x:Name="Notice" Text="请稍候…" TextWrapping="Wrap" Foreground="{StaticResource Muted}" FontSize="12" Margin="0,4,8,0"/>
+              <ProgressBar x:Name="Working" IsIndeterminate="True" Height="3" Margin="0,9,8,0" Visibility="Collapsed"
+                           Background="#F3E5EB" Foreground="#9E4365" BorderThickness="0"/>
+            </StackPanel>
+            <Button x:Name="StopButton" Grid.Column="1" Style="{StaticResource Action}" Content="停止模型" VerticalAlignment="Center"/>
+          </Grid>
+        </Border>
+        <TextBlock Style="{StaticResource Heading}" Text="选择模型"/>
+        <Grid Margin="0,0,0,13">
+          <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="11"/><ColumnDefinition Width="*"/><ColumnDefinition Width="11"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+          <RadioButton x:Name="GlmCard" GroupName="SparkModels" Style="{StaticResource ModelCard}" Tag="glm" AutomationProperties.Name="GLM-5.3 Flash">
+            <StackPanel>
+              <Border Style="{StaticResource LogoTile}"><Image x:Name="GlmLogo" Stretch="Uniform"/></Border>
+              <TextBlock Text="GLM-5.3 Flash" Margin="0,9,0,0" Style="{StaticResource CardName}"/>
+              <TextBlock x:Name="GlmState" Style="{StaticResource CardDetail}"/>
+            </StackPanel>
+          </RadioButton>
+          <RadioButton x:Name="DeepseekCard" Grid.Column="2" GroupName="SparkModels" Style="{StaticResource ModelCard}" Tag="deepseek" AutomationProperties.Name="DeepSeek V4.1 Flash">
+            <StackPanel>
+              <Border Style="{StaticResource LogoTile}"><Image x:Name="DeepseekLogo" Stretch="Uniform"/></Border>
+              <TextBlock Text="DeepSeek V4.1 Flash" Margin="0,9,0,0" Style="{StaticResource CardName}"/>
+              <TextBlock x:Name="DeepseekState" Style="{StaticResource CardDetail}"/>
+            </StackPanel>
+          </RadioButton>
+          <RadioButton x:Name="QwenCard" Grid.Column="4" GroupName="SparkModels" Style="{StaticResource ModelCard}" Tag="qwen" AutomationProperties.Name="Qwen3.8 Flash Next">
+            <StackPanel>
+              <Border Style="{StaticResource LogoTile}"><Image x:Name="QwenLogo" Stretch="Uniform"/></Border>
+              <TextBlock Text="Qwen3.8 Flash Next" Margin="0,9,0,0" Style="{StaticResource CardName}"/>
+              <TextBlock x:Name="QwenState" Style="{StaticResource CardDetail}"/>
+            </StackPanel>
+          </RadioButton>
+        </Grid>
+        <Button x:Name="SwitchButton" Style="{StaticResource Primary}" Content="启动 / 切换" HorizontalAlignment="Left" Margin="0,0,0,21"/>
+        <TextBlock Style="{StaticResource Heading}" Text="用当前模型打开工具"/>
+        <Grid Margin="0,0,0,13">
+          <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="11"/><ColumnDefinition Width="*"/><ColumnDefinition Width="11"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+          <Button x:Name="ZcodeButton" Tag="ZCode" Style="{StaticResource Action}" HorizontalContentAlignment="Left" Padding="10,8" AutomationProperties.Name="打开 ZCode">
+            <DockPanel>
+              <Border DockPanel.Dock="Left" Style="{StaticResource LogoTile}" Margin="0,0,8,0" Width="37" Height="37" Padding="5"><Image x:Name="ZcodeLogo"/></Border>
+              <TextBlock Text="ZCode" Style="{StaticResource CardName}" VerticalAlignment="Center"/>
+            </DockPanel>
+          </Button>
+          <Button x:Name="HarnessButton" Grid.Column="2" Tag="DeepSeekHarness" Style="{StaticResource Action}" HorizontalContentAlignment="Left" Padding="10,8" AutomationProperties.Name="打开 DeepSeek Harness">
+            <DockPanel>
+              <Border DockPanel.Dock="Left" Style="{StaticResource LogoTile}" Margin="0,0,8,0" Width="37" Height="37" Padding="5"><Image x:Name="HarnessLogo"/></Border>
+              <TextBlock Text="DeepSeek Harness" Style="{StaticResource CardName}" VerticalAlignment="Center"/>
+            </DockPanel>
+          </Button>
+          <Button x:Name="OpencodeButton" Grid.Column="4" Tag="OpenCode" Style="{StaticResource Action}" HorizontalContentAlignment="Left" Padding="10,8" AutomationProperties.Name="打开 OpenCode">
+            <DockPanel>
+              <Border DockPanel.Dock="Left" Style="{StaticResource LogoTile}" Margin="0,0,8,0" Width="37" Height="37" Padding="5"><Image x:Name="OpencodeLogo"/></Border>
+              <TextBlock Text="OpenCode" Style="{StaticResource CardName}" VerticalAlignment="Center"/>
+            </DockPanel>
+          </Button>
+        </Grid>
+        <Grid>
+          <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+          <Button x:Name="ChooseButton" Style="{StaticResource Action}" Content="选择项目文件夹…"/>
+          <TextBlock x:Name="ProjectLabel" Grid.Column="1" Text="使用独立空目录" Foreground="{StaticResource Muted}" TextTrimming="CharacterEllipsis"
+                     VerticalAlignment="Center" Margin="11,0,0,0"/>
+        </Grid>
+      </StackPanel>
+    </ScrollViewer>
+  </Grid>
+</Window>

@@ -1,0 +1,26 @@
+[
+  {
+    "key": "glm",
+    "id": "GLM-5.3-Flash-EXL3",
+    "port": 8888,
+    "context": 1048576,
+    "maxOutput": 131072,
+    "name": "GLM-5.3 Flash"
+  },
+  {
+    "key": "deepseek",
+    "id": "deepseek-v4.1-flash",
+    "port": 18888,
+    "context": 1048576,
+    "maxOutput": 393216,
+    "name": "DeepSeek V4.1 Flash"
+  },
+  {
+    "key": "qwen",
+    "id": "qwen3.8-flash-next",
+    "port": 18300,
+    "context": 262144,
+    "maxOutput": 131072,
+    "name": "Qwen3.8 Flash Next"
+  }
+]

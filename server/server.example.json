@@ -1,0 +1,42 @@
+{
+  "head": {
+    "hostname": "spark-head",
+    "roce_address": "192.0.2.10",
+    "roce_interface": "enp1s0",
+    "roce_devices": ["roce0"]
+  },
+  "worker": {
+    "hostname": "spark-worker",
+    "ssh_target": "spark@spark-worker.example",
+    "roce_address": "192.0.2.11",
+    "roce_interface": "enp1s0",
+    "roce_devices": ["roce0"]
+  },
+  "fabric": {
+    "mtu": 9000,
+    "gid_index": 3,
+    "require_kho_off": true
+  },
+  "models": {
+    "glm": {
+      "cwd": "~/GLM-5.3-Flash-EXL3-2x-DGX-Sparks-TensorFold",
+      "snapshot": "~/.cache/huggingface/hub/models--Mia-AiLab--GLM-5.3-Flash-EXL3-4bpw-TensorFold/snapshots/078455ffe6472f9a52fbc1139f58b9db2881b25c",
+      "draft": "~/.cache/huggingface/hub/models--incoai--GLM-5.3-Flash-DFlash2/snapshots/bf582e4eacc1810f76656d1811693ff6c6737d2a",
+      "venv": null,
+      "digest": "sha256:b925352f3515caddc1dde8abf33a621afad8133d2964a091184ad4842bfff7b6"
+    },
+    "deepseek": {
+      "weights": "~/models/DeepSeek-V4.1-Flash-1017-EXL3-2.9bpw",
+      "engram": "~/models/DeepSeek-V4.1-Flash-1017-engram",
+      "cache": "~/.cache/ds41-1017-tf",
+      "image": "tensorfold-dsv41:8e0966e",
+      "digest": "sha256:193ec8579b0c3dd5bf6b122f6fd4f0cc8cfd225273d86f537892203ddff91f6e"
+    },
+    "qwen": {
+      "cwd": "~/Qwen3.8-Flash-Next-Dual-DGX-Sparks",
+      "cache": "~/.cache/huggingface/hub/models--nvidia--Qwen3.8-Flash-Next-NVFP4",
+      "revision": "fc694b54fb0174e0913e6adf86691ef85a4ead47",
+      "digest": "sha256:91d9b077589e7ebb9399ea8db07787bd40cc04ba96a767f021ffdf3e321ea9a0"
+    }
+  }
+}
