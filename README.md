@@ -10,7 +10,9 @@ Windows 通过 SSH 把三组模型 API 转发到本机回环地址。主 Spark �
 
 ## 准备两台 Spark
 
-三套双机部署共用 [server.json 配置样例](server/server.example.json)。完成基础软件、RoCE 和 SSH 配置后，在主 Spark 运行下面的命令。 [部署指南](deploy/README.md)
+从新机器开始部署时，按清单中的编号在主 Spark、从 Spark 和 Windows 上依次执行。 [纯命令部署清单](deploy/commands.md) · [完整部署指南](deploy/README.md)
+
+三套双机部署共用 [server.json 配置样例](server/server.example.json)。完成基础软件、RoCE 和 SSH 配置后，在主 Spark 运行下面的命令。
 
 ```bash
 mkdir -p ~/.config/spark-switcher
