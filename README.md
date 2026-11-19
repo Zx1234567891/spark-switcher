@@ -10,7 +10,7 @@ Windows 通过 SSH 把三组模型 API 转发到本机回环地址。主 Spark �
 
 ## 准备两台 Spark
 
-三套双机部署共用 [server.json 配置样例](server/server.example.json)。按照[部署指南](deploy/README.md)配置两台 Spark 的 RoCE 和 SSH，在主 Spark 上运行：
+三套双机部署共用 [server.json 配置样例](server/server.example.json)。按部署指南配置 RoCE 和 SSH，并在主 Spark 导入 DeepSeek 预构建镜像，再运行下面的命令。 [部署指南](deploy/README.md) · [DeepSeek 免构建导入](deploy/README.md#deepseek-免构建导入)
 
 ```bash
 mkdir -p ~/.config/spark-switcher
