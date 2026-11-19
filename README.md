@@ -10,17 +10,16 @@ Windows 通过 SSH 把三组模型 API 转发到本机回环地址。主 Spark �
 
 ## 准备两台 Spark
 
-三套双机部署共用 [server.json 配置样例](server/server.example.json)。按部署指南配置 RoCE 和 SSH，并在主 Spark 导入 DeepSeek 预构建镜像，再运行下面的命令。 [部署指南](deploy/README.md) · [DeepSeek 免构建导入](deploy/README.md#deepseek-免构建导入)
+三套双机部署共用 [server.json 配置样例](server/server.example.json)。完成基础软件、RoCE 和 SSH 配置后，在主 Spark 运行下面的命令。 [部署指南](deploy/README.md)
 
 ```bash
 mkdir -p ~/.config/spark-switcher
 cp -n server/server.example.json ~/.config/spark-switcher/server.json
 # Edit server.json using your hostnames, SSH target and RoCE interfaces.
-bash deploy/prepare.sh check
 bash deploy/prepare.sh all
 ```
 
-`all` 使用仓库自带的三套完整固定版上游源码，为两台 Spark 准备权重、ARM64 镜像和启动配置，然后安装控制器。也可把 `all` 换成 `glm`、`deepseek` 或 `qwen` 逐个准备。部署后的启动和切换由 Windows 界面或主 Spark 上的 `sparkctl.py` 控制。 [镜像与模型下载清单](deploy/README.md#镜像清单) · [上游源码](vendor/SOURCES.md)
+`all` 会先检查两台主机和 RoCE，再准备权重、ARM64 镜像和启动配置，最后安装控制器。DeepSeek 预构建镜像随流程自动下载、校验和导入。也可把 `all` 换成 `glm`、`deepseek` 或 `qwen` 逐个准备。部署后的启动和切换由 Windows 界面或主 Spark 上的 `sparkctl.py` 控制。 [镜像与模型下载清单](deploy/README.md#镜像清单) · [上游源码](vendor/SOURCES.md)
 
 ## 配置 Windows 直连
 

@@ -160,11 +160,7 @@ nano ~/.config/spark-switcher/server.json
 }
 ```
 
-```bash
-bash deploy/prepare.sh check
-```
-
-检查通过后再开始下载。脚本会核对两台主机、ARM64、Docker 权限、RoCE 路由、MTU 和 GID。示例文件包含完整的权重、引擎和缓存路径，`~/` 分别解析为各节点运行账号的家目录。 [完整配置样例](../server/server.example.json)
+`prepare.sh all` 会先核对两台主机、ARM64、Docker 权限、RoCE 路由、MTU 和 GID。若只想检查环境，可单独运行 `bash deploy/prepare.sh check`。示例文件包含完整的权重、引擎和缓存路径，`~/` 分别解析为各节点运行账号的家目录。 [完整配置样例](../server/server.example.json)
 
 ## 5. 准备镜像和权重
 
@@ -175,7 +171,7 @@ bash deploy/prepare.sh check
 | 模型 | 获取方式 | 两台的最终镜像标签 | 大小 |
 | --- | --- | --- | ---: |
 | GLM-5.3 Flash | 从 GHCR 拉取固定摘要，准备脚本自动打本地标签 | `tensorfold-glm53:v0.6.0` | 24.6 GB |
-| DeepSeek V4.1 Flash 1017 | 拉取 NVIDIA 官方固定基础镜像，导入从现有 Spark 导出的 DeepSeek 镜像增量包 | `tensorfold-dsv41:8e0966e` | 24.6 GB |
+| DeepSeek V4.1 Flash 1017 | 部署脚本自动拉取 NVIDIA 官方固定基础镜像、校验并导入 DeepSeek 镜像增量包 | `tensorfold-dsv41:8e0966e` | 24.6 GB |
 | Qwen3.8 Flash Next | 从 Docker Hub 拉取 vLLM 0.30.0 的固定 ARM64 摘要，准备脚本自动打本地标签 | `vllm/vllm-openai:v0.30.0` | 22.1 GB |
 
 GLM 和 Qwen 会在运行 `prepare.sh` 时按需拉取。提前拉取这两个镜像时使用下列固定版本。
@@ -192,7 +188,9 @@ docker tag "$qwen_ref" vllm/vllm-openai:v0.30.0
 
 ### DeepSeek 免构建导入
 
-在主 Spark 的仓库根目录执行。NVIDIA 基础层从 NGC 下载，传输量约 11.3 GB。Spark Switcher Release 提供从现有镜像导出的 TensorFold 运行层和原始镜像配置，增量包约 112 MB。导入脚本验证镜像内容，合并成完整的 Docker 归档流并调用 `docker load`。整个过程无需运行 `docker build` 或安装容器内的 Python 依赖。 [DeepSeek 镜像发布页](https://github.com/Zx1234567891/spark-switcher/releases/tag/deepseek-arm64-8e0966e) · [NVIDIA PyTorch 26.07](https://docs.nvidia.com/deeplearning/frameworks/pytorch-release-notes/rel-26-07.html)
+`prepare.sh all` 和 `prepare.sh deepseek` 都会自动完成导入。部署优先复用两台 Spark 上与配置一致的已有镜像。需要下载时，脚本会按仓库固定的 SHA‑256 校验约 112 MB 的 Release 增量包，并按需从 NGC 拉取约 11.3 GB 的官方基础层。导入器校验镜像内容、生成完整的 Docker 归档并调用 `docker load`。 [DeepSeek 镜像发布页](https://github.com/Zx1234567891/spark-switcher/releases/tag/deepseek-arm64-8e0966e) · [NVIDIA PyTorch 26.07](https://docs.nvidia.com/deeplearning/frameworks/pytorch-release-notes/rel-26-07.html)
+
+如需提前单独下载或制作离线介质，可在主 Spark 的仓库根目录手动执行以下步骤。
 
 ```bash
 base=nvcr.io/nvidia/pytorch@sha256:7531d90bcbe0e43e1f7363029c7e145ce90eebeb494a7b4695fdba0329d7c3c3
@@ -207,9 +205,9 @@ python3 deploy/import-deepseek-image.py "$bundle"
 docker image inspect --format '{{.Os}}/{{.Architecture}} {{.Id}}' tensorfold-dsv41:8e0966e
 ```
 
-成功时最后一条返回 `linux/arm64 sha256:193ec8579b0c3dd5bf6b122f6fd4f0cc8cfd225273d86f537892203ddff91f6e`，与 [server.json 样例](../server/server.example.json) 的 DeepSeek 镜像 ID 一致。建议为导入额外保留约 55 GB 的临时磁盘空间，可用 `--temp-dir /path/to/disk` 指定归档暂存目录。之后运行 `prepare.sh all` 或 `prepare.sh deepseek`，脚本会将最终镜像同步给从 Spark。
+成功时最后一条返回 `linux/arm64 sha256:193ec8579b0c3dd5bf6b122f6fd4f0cc8cfd225273d86f537892203ddff91f6e`。首次导入建议为临时归档和 Docker 解包额外预留约 55 GB 空间。自动部署可通过 `TMPDIR=/path/to/disk bash deploy/prepare.sh all` 改变归档暂存目录，手工导入可用 `--temp-dir /path/to/disk`。Docker 数据目录所在磁盘也需有解包空间。部署流程会将最终镜像同步给从 Spark。 [server.json 样例](../server/server.example.json)
 
-如果手头已有 `docker save` 导出的完整最终镜像归档，则直接用 `docker load --input /path/to/deepseek.tar` 导入。需要自行定制镜像时，可以使用随库的 Dockerfile 构建。 [本地构建文件](deepseek.Dockerfile)
+如果手头已有 `docker save` 导出的完整最终镜像归档，可直接用 `docker load --input /path/to/deepseek.tar` 导入。使用自定义 DeepSeek 镜像时，可在主 Spark 加载配置指定的镜像 ID，或在从 Spark 用配置指定的标签加载。 [自定义镜像构建文件](deepseek.Dockerfile)
 
 ### 上游代码和模型文件
 
@@ -223,7 +221,7 @@ GLM 和 Qwen 使用 Hugging Face Hub 缓存布局。若已有验证过的快照�
 
 ### 路线 A：主 Spark 联网下载
 
-在主 Spark 的仓库根目录运行。先按上一节导入 DeepSeek 最终镜像。以下虚拟环境用于安装 `hf` 权重下载工具，Docker 容器内的模型运行环境由镜像提供。
+在主 Spark 的仓库根目录运行。装好 `hf` 权重下载工具后，执行 `bash deploy/prepare.sh all` 即可下载、校验和同步三款模型的镜像与权重。首次运行包含 DeepSeek 预构建镜像的导入。
 
 ```bash
 python3 -m venv ~/.local/share/spark-switcher/download-env

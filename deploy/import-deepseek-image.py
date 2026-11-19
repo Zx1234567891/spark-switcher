@@ -59,10 +59,10 @@ def inspect_image(reference):
     return images[0]
 
 
-def check_tag():
-    image = inspect_image(TARGET_TAG)
+def check_tag(tag):
+    image = inspect_image(tag)
     if image is not None and image.get("Id") != TARGET_ID:
-        raise RuntimeError("Refusing to replace {}: it points to {}".format(TARGET_TAG, image.get("Id")))
+        raise RuntimeError("Refusing to replace {}: it points to {}".format(tag, image.get("Id")))
     return image
 
 
@@ -250,21 +250,24 @@ def load_image(base, paths, config_raw, layer_path, directory):
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("archive", type=Path, help="deepseek-8e0966e-linux-arm64-delta.tar.gz")
+    parser.add_argument("--tag", default=TARGET_TAG, help="Docker tag for the restored image")
     parser.add_argument("--temp-dir", type=Path, default=Path(os.environ.get("TMPDIR") or Path.cwd()),
                         help="Existing disk directory with about 25 GB free (default: TMPDIR or current directory)")
     args = parser.parse_args(argv)
     if not args.archive.is_file():
         parser.error("delta archive does not exist")
+    if not args.tag or args.tag.startswith("-"):
+        parser.error("expected a Docker image tag")
     try:
         with tempfile.TemporaryDirectory(prefix="deepseek-image-", dir=args.temp_dir) as temp:
             directory = Path(temp)
             say("Checking the delta's exact config and added layer...")
             config_raw, config, layer_path = stage_delta(args.archive, directory)
             target_layers = config["rootfs"]["diff_ids"]
-            existing = check_tag()
+            existing = check_tag(args.tag)
             if existing is not None:
                 validate_image(existing, TARGET_ID, target_layers)
-                say("Already installed: " + TARGET_TAG + " (" + TARGET_ID + ")")
+                say("Already installed: " + args.tag + " (" + TARGET_ID + ")")
                 return 0
             base_image = inspect_image(BASE_ID)
             if base_image is None:
@@ -279,13 +282,13 @@ def main(argv=None):
             docker("image", "save", "--output", str(base_path), BASE_ID)
             with tarfile.open(base_path, "r:*") as archive:
                 paths = validate_base_archive(archive, target_layers[:BASE_LAYERS])
-                check_tag()
+                check_tag(args.tag)
                 load_image(archive, paths, config_raw, layer_path, directory)
             validate_image(inspect_image(TARGET_ID), TARGET_ID, target_layers)
-            check_tag()
-            docker("image", "tag", TARGET_ID, TARGET_TAG)
-            validate_image(inspect_image(TARGET_TAG), TARGET_ID, target_layers)
-            say("Verified: " + TARGET_TAG + " (" + TARGET_ID + ")")
+            check_tag(args.tag)
+            docker("image", "tag", TARGET_ID, args.tag)
+            validate_image(inspect_image(args.tag), TARGET_ID, target_layers)
+            say("Verified: " + args.tag + " (" + TARGET_ID + ")")
             return 0
     except (OSError, ValueError, KeyError, TypeError, tarfile.TarError, RuntimeError) as exc:
         print("ERROR: " + str(exc), file=sys.stderr)

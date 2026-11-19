@@ -201,9 +201,37 @@ _deepseek_download_assets() {
     [[ -z "$repair" ]] || die "DeepSeek $kind failed checksum validation after download: $repair"
 }
 
+_deepseek_import_release() (
+    local image=$1 image_cache=$2
+    local bundle=deepseek-8e0966e-linux-arm64-delta.tar.gz
+    local sha=0e70bbfa781a423616660ff40951bb1c3771ebe2cb36f298bd668d28b9d7961e
+    local url="https://github.com/Zx1234567891/spark-switcher/releases/download/deepseek-arm64-8e0966e/$bundle"
+    local archive="$image_cache/$bundle"
+    local partial checksum
+    mkdir -p -- "$image_cache" || return
+    command -v sha256sum >/dev/null || die "Install sha256sum to verify the DeepSeek image package."
+    checksum=
+    if [[ -f "$archive" ]]; then
+        checksum=$(sha256sum < "$archive") || return
+    fi
+    if [[ "${checksum%% *}" != "$sha" ]]; then
+        command -v curl >/dev/null || die "Install curl to download the DeepSeek image package."
+        say "Downloading the pinned DeepSeek ARM64 image package."
+        partial=$(mktemp "$image_cache/.$bundle.XXXXXX") || return
+        trap 'rm -f -- "$partial"' EXIT
+        curl --fail --location --retry 3 --connect-timeout 15 --output "$partial" "$url" || return
+        checksum=$(sha256sum < "$partial") || return
+        [[ "${checksum%% *}" == "$sha" ]] || die "DeepSeek release package SHA-256 mismatch."
+        mv -f -- "$partial" "$archive" || return
+    fi
+    say "Importing the verified DeepSeek image package."
+    python3 "$DEPLOY_DIR/import-deepseek-image.py" "$archive" \
+        --tag="$image" --temp-dir "${TMPDIR:-$image_cache}"
+)
+
 prepare_deepseek() {
-    local image expected actual weights engram cache worker_weights worker_engram worker_cache repair marker temporary
-    local engine="$PROJECT_ROOT/vendor/tensorfold-deepseek"
+    local image expected actual weights engram cache worker_weights worker_engram worker_cache repair marker
+    local released_image=sha256:193ec8579b0c3dd5bf6b122f6fd4f0cc8cfd225273d86f537892203ddff91f6e
     local template="$PROJECT_ROOT/vendor/deepseek-template/chat_template.jinja"
     image=$(cfg models.deepseek.image)
     expected=$(cfg models.deepseek.digest)
@@ -219,7 +247,8 @@ prepare_deepseek() {
     if docker image inspect "$image" >/dev/null 2>&1; then
         actual=$(docker image inspect --format '{{.Id}}' "$image")
         if ! same_image "$image" "$expected"; then
-            [[ -f "$marker" && $(cat "$marker") == "$image"$'\n'"$actual"$'\n'8e0966e2b09250abe2f6d9cc51edc20630e6eb1a ]] ||
+            [[ "$expected" == "$released_image" && -f "$marker" &&
+                $(cat "$marker") == "$image"$'\n'"$actual"$'\n'8e0966e2b09250abe2f6d9cc51edc20630e6eb1a ]] ||
                 die "Configured DeepSeek image ID does not match the local image."
             same_image "$image" "$actual" || die "Prepared DeepSeek image must be Linux ARM64."
             say "Resuming the previously built DeepSeek image."
@@ -229,19 +258,14 @@ prepare_deepseek() {
         worker docker save "$image" | docker load || return
         same_image "$image" "$expected" || die "Imported DeepSeek image failed verification."
         actual=$expected
+    elif same_image "$expected" "$expected"; then
+        docker image tag "$expected" "$image" || return
+        actual=$expected
     else
-        [[ -f "$engine/pyproject.toml" && -f "$engine/LICENSE" ]] ||
-            die "Bundled DeepSeek TensorFold source is missing. Use the complete Spark Switcher repository."
-        say "Building DeepSeek from the bundled TensorFold source."
-        docker build --file "$DEPLOY_DIR/deepseek.Dockerfile" --tag "$image" "$engine" || return
-        actual=$(docker image inspect --format '{{.Id}}' "$image")
-        same_image "$image" "$actual" || die "Built DeepSeek image failed verification."
-        [[ $(docker image inspect --format '{{index .Config.Labels "org.opencontainers.image.revision"}}' "$image") == 8e0966e2b09250abe2f6d9cc51edc20630e6eb1a ]] ||
-            die "Built DeepSeek image does not identify the pinned TensorFold commit."
-        temporary=$(mktemp "$cache/.deepseek-built.XXXXXX")
-        printf '%s\n' "$image" "$actual" 8e0966e2b09250abe2f6d9cc51edc20630e6eb1a > "$temporary"
-        chmod 0600 "$temporary"
-        mv -f -- "$temporary" "$marker"
+        [[ "$expected" == "$released_image" ]] ||
+            die "Load the configured custom DeepSeek image $image ($expected), or use the default release image ID."
+        _deepseek_import_release "$image" "$cache/spark-switcher-image" || return
+        actual=$expected
     fi
     sync_image "$image" "$actual" || return
     if [[ "$actual" != "$expected" ]]; then
