@@ -2,7 +2,6 @@
 # Prepare the verified Python-engine GLM recipe without starting its ranks.
 
 prepare_glm() (
-    local upstream=https://github.com/MiaAI-Lab/GLM-5.3-Flash-EXL3-2x-DGX-Sparks-TensorFold.git
     local commit=bf5f94523a8251029cedae86bf61f8ce37fac218
     local model=Mia-AiLab/GLM-5.3-Flash-EXL3-4bpw-TensorFold
     local revision=078455ffe6472f9a52fbc1139f58b9db2881b25c
@@ -39,7 +38,7 @@ prepare_glm() (
     fabric_peer=$(cfg worker.roce_address)
 
     say "Preparing GLM source, pinned image and both checkpoint snapshots."
-    ensure_checkout "$upstream" "$commit" "$checkout"
+    install_source glm "$commit" "$checkout"
     ensure_image "$registry@$registry_digest" "$image" "$image_id"
     ensure_hf_snapshot "$model" "$revision" "$head_hub" "$worker_hub" \
         tokenizer.json chat_template.jinja generation_config.json processor_config.json quantization_config.json

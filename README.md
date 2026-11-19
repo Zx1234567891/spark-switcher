@@ -20,7 +20,7 @@ bash deploy/prepare.sh check
 bash deploy/prepare.sh all
 ```
 
-`all` 会获取三个固定版本的上游方案并为两台 Spark 准备权重、ARM64 镜像和启动配置，然后安装控制器。也可把 `all` 换成 `glm`、`deepseek` 或 `qwen` 逐个准备。部署后的启动和切换由 Windows 界面或主 Spark 上的 `sparkctl.py` 控制。 [镜像与模型下载清单](deploy/README.md#镜像清单)
+`all` 使用仓库自带的三套完整固定版上游源码，为两台 Spark 准备权重、ARM64 镜像和启动配置，然后安装控制器。也可把 `all` 换成 `glm`、`deepseek` 或 `qwen` 逐个准备。部署后的启动和切换由 Windows 界面或主 Spark 上的 `sparkctl.py` 控制。 [镜像与模型下载清单](deploy/README.md#镜像清单) · [上游源码](vendor/SOURCES.md)
 
 ## 配置 Windows 直连
 

@@ -50,20 +50,33 @@ sync_tree() {
     rsync -a -s --partial -e "$RSYNC_SSH" -- "$source/" "$WORKER_TARGET:$destination/"
 }
 
-ensure_checkout() {
-    local url=$1 revision=$2 destination=$3 current staging
+install_source() {
+    local name=$1 revision=$2 destination=$3 current staging
+    local bundled="$PROJECT_ROOT/vendor/$name"
+    local marker=.spark-switcher-source
+    [[ -f "$bundled/LICENSE" && -f "$bundled/start.sh" ]] ||
+        die "Bundled $name source is missing. Use the complete Spark Switcher repository."
     if [[ -e "$destination" ]]; then
-        current=$(git -C "$destination" rev-parse --verify HEAD 2>/dev/null) ||
-            die "Existing path is not the expected Git checkout: $destination"
-        [[ "$current" == "$revision" ]] || die "Check out $revision in $destination (found $current)"
+        if [[ -f "$destination/$marker" ]]; then
+            current=$(cat "$destination/$marker") || return
+        elif [[ -e "$destination/.git" ]] && command -v git >/dev/null; then
+            current=$(git -C "$destination" rev-parse --verify HEAD 2>/dev/null) || return
+        else
+            die "Use an empty destination or the matching upstream checkout: $destination"
+        fi
+        [[ "$current" == "$revision" && -f "$destination/start.sh" && -f "$destination/stop.sh" ]] ||
+            die "Existing source at $destination differs from the bundled $name revision $revision."
         return
     fi
-    say "Fetching $url at $revision"
+    say "Installing bundled $name source at $revision"
     mkdir -p -- "$(dirname -- "$destination")" || return
-    staging="$destination.spark-switcher-partial"
-    git init -q "$staging" || return
-    git -C "$staging" fetch -q --depth=1 "$url" "$revision" || return
-    git -C "$staging" -c advice.detachedHead=false checkout -q --detach "$revision" || return
+    staging=$(mktemp -d "$destination.spark-switcher.XXXXXX") || return
+    cp -a -- "$bundled/." "$staging/" || return
+    chmod u+x -- "$staging/start.sh" "$staging/stop.sh" || return
+    if [[ -f "$staging/start-v030.sh" ]]; then
+        chmod u+x -- "$staging/start-v030.sh" || return
+    fi
+    printf '%s\n' "$revision" > "$staging/$marker" || return
     mv -T -- "$staging" "$destination"
 }
 

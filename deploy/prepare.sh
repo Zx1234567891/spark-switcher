@@ -15,12 +15,12 @@ esac
 (( $# <= 1 )) || { printf 'Pass at most one selection.\n' >&2; exit 2; }
 
 DEPLOY_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
-SERVER_DIR="$DEPLOY_DIR/../server"
-SOURCE_ROOT="$HOME/.local/share/spark-switcher/sources"
+PROJECT_ROOT=$(cd -- "$DEPLOY_DIR/.." && pwd)
+SERVER_DIR="$PROJECT_ROOT/server"
 # shellcheck source=common.sh
 source "$DEPLOY_DIR/common.sh"
 
-for program in python3 git docker ssh rsync flock; do
+for program in python3 docker ssh rsync flock; do
     command -v "$program" >/dev/null || die "Missing head prerequisite: $program"
 done
 [[ "$(uname -m)" == aarch64 ]] || die "Run from the head DGX Spark (Linux ARM64)."

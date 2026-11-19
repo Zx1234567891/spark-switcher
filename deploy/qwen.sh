@@ -3,7 +3,6 @@
 
 prepare_qwen() (
     set -Eeuo pipefail
-    local upstream=https://github.com/MiaAI-Lab/Qwen3.8-Flash-Next-Dual-DGX-Sparks.git
     local commit=cd839d0b62f6c737178a0c2037733420e0524ebf
     local model=nvidia/Qwen3.8-Flash-Next-NVFP4
     local revision=fc694b54fb0174e0913e6adf86691ef85a4ead47
@@ -41,7 +40,7 @@ prepare_qwen() (
         die "Qwen requires a worker SSH target and the connected RoCE devices on both Sparks"
 
     say "Preparing pinned Qwen source and the Chinese/English/code MTP vocabulary."
-    ensure_checkout "$upstream" "$commit" "$checkout"
+    install_source qwen "$commit" "$checkout"
     # This is an adapter for the pinned launcher, not a separate serving stack.
     # Its generated .env is shell-quoted; SSH aliases stay separate from fabric IPs.
     python3 - "$checkout" "$worker_target" "$head_address" "$worker_address" \

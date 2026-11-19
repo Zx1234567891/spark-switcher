@@ -201,34 +201,10 @@ _deepseek_download_assets() {
     [[ -z "$repair" ]] || die "DeepSeek $kind failed checksum validation after download: $repair"
 }
 
-_deepseek_prepare_template() {
-    local directory=$1 cache=$2 result temporary endpoint
-    if _deepseek_template_program | python3 - "$directory"; then
-        return
-    else
-        result=$?
-    fi
-    [[ "$result" == 3 ]] || return "$result"
-    command -v curl >/dev/null || die "Missing curl. Import the pinned chat_template.jinja or install curl."
-    endpoint=${HF_ENDPOINT:-https://huggingface.co}
-    temporary=$(mktemp "$cache/deepseek-template.XXXXXX")
-    if ! curl --fail --location --retry 3 --connect-timeout 20 \
-        "$endpoint/deepseek-ai/DeepSeek-V4.1-Flash/resolve/314113f8a7dadb388215396ba5fbee2c610a04d6/chat_template.jinja" \
-        --output "$temporary"; then
-        rm -f -- "$temporary"
-        return 1
-    fi
-    if _deepseek_template_program | python3 - "$directory" "$temporary"; then
-        rm -f -- "$temporary"
-    else
-        result=$?
-        rm -f -- "$temporary"
-        return "$result"
-    fi
-}
-
 prepare_deepseek() {
-    local image expected actual recipe weights engram cache worker_weights worker_engram worker_cache repair marker temporary
+    local image expected actual weights engram cache worker_weights worker_engram worker_cache repair marker temporary
+    local engine="$PROJECT_ROOT/vendor/tensorfold-deepseek"
+    local template="$PROJECT_ROOT/vendor/deepseek-template/chat_template.jinja"
     image=$(cfg models.deepseek.image)
     expected=$(cfg models.deepseek.digest)
     weights=$(head_path "$(cfg models.deepseek.weights)")
@@ -254,12 +230,10 @@ prepare_deepseek() {
         same_image "$image" "$expected" || die "Imported DeepSeek image failed verification."
         actual=$expected
     else
-        say "Building the pinned DeepSeek TensorFold Python engine."
-        recipe="$SOURCE_ROOT/deepseek-v41-legacy"
-        ensure_checkout https://github.com/lucataco/DeepSeek-V4.1-Flash-2x-DGX-Spark.git \
-            7b46f9d9d8b21357f8998ccce8bdfa857a9ef1ce "$recipe" || return
-        docker build --build-arg TF_COMMIT=8e0966e2b09250abe2f6d9cc51edc20630e6eb1a \
-            --tag "$image" "$recipe/docker" || return
+        [[ -f "$engine/pyproject.toml" && -f "$engine/LICENSE" ]] ||
+            die "Bundled DeepSeek TensorFold source is missing. Use the complete Spark Switcher repository."
+        say "Building DeepSeek from the bundled TensorFold source."
+        docker build --file "$DEPLOY_DIR/deepseek.Dockerfile" --tag "$image" "$engine" || return
         actual=$(docker image inspect --format '{{.Id}}' "$image")
         same_image "$image" "$actual" || die "Built DeepSeek image failed verification."
         [[ $(docker image inspect --format '{{index .Config.Labels "org.opencontainers.image.revision"}}' "$image") == 8e0966e2b09250abe2f6d9cc51edc20630e6eb1a ]] ||
@@ -278,7 +252,7 @@ prepare_deepseek() {
         LibertAIDAI/DeepSeek-V4.1-Flash-1017-EXL3-2.9bpw afc7aa0aab98ee735c0f54e0a122019af1ac08f1 || return
     _deepseek_download_assets "$engram" engram "$cache" \
         deepseek-ai/DeepSeek-V4.1-Flash-1017 1bae0e1088993b9b82de08f59de5be5a34e42170 || return
-    _deepseek_prepare_template "$weights" "$cache" || return
+    _deepseek_template_program | python3 - "$weights" "$template" || return
 
     say "Copying verified DeepSeek assets to the worker."
     sync_tree "$weights" "$worker_weights" || return
