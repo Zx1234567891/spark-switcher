@@ -586,6 +586,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
     commands.add_parser("check-config")
+    commands.add_parser("check-fabric")
     commands.add_parser("status")
     check = commands.add_parser("preflight")
     check.add_argument("target", choices=MODELS)
@@ -599,9 +600,12 @@ def main():
     args = parser.parse_args()
     try:
         NODES, FABRIC, MODELS = load_config()
-        if args.command != "check-config":
+        if args.command not in {"check-config", "check-fabric"}:
             DATA.mkdir(mode=0o700, parents=True, exist_ok=True)
         if args.command == "check-config":
+            result = dict(ok=True)
+        elif args.command == "check-fabric":
+            topology()
             result = dict(ok=True)
         elif args.command == "status":
             result = status()
